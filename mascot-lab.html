@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>haum — maskot-lab</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#15191A;--panel:#1E2426;--line:#2E3739;--text:#E7E3D6;--muted:#8A9590;--signal:#E2502A}
+  html,body{background:var(--bg);color:var(--text)}
+  body{font-family:-apple-system,"Segoe UI",system-ui,Roboto,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px}
+  .eyebrow{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  .focusable:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:4px}
+  hr{border:none;border-top:1px solid var(--line)}
+  ::selection{background:var(--signal);color:var(--bg)}
+  .lift{transition:transform .14s ease,border-color .14s ease}
+  .lift:hover{transform:translateY(-2px)}
+  .chip{transition:background .12s ease,color .12s ease}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {useState,useMemo} = React;
+
+const PALS = {
+  aske:{name:"Aske", c:{bg:"#15191A",panel:"#1E2426",line:"#2E3739",text:"#E7E3D6",muted:"#8A9590",signal:"#E2502A",accent:"#9FB1A6",warn:"#E2A23A"}},
+  natt:{name:"Natt", c:{bg:"#0F1116",panel:"#181B22",line:"#262A33",text:"#E6E8EC",muted:"#7C828E",signal:"#F4B740",accent:"#4FA3D1",warn:"#E2502A"}},
+};
+
+const HEADS={
+  squircle:{top:18}, circle:{top:18}, hex:{top:16}, capsule:{top:12}, pill:{top:34}
+};
+const SIDE={
+  squircle:{l:18,r:142}, circle:{l:18,r:142}, hex:{l:22,r:138}, capsule:{l:32,r:128}, pill:{l:14,r:146}
+};
+
+function buildMascot(cfg, c, size){
+  const {head,eyes,top,body,mouth}=cfg;
+  const m=HEADS[head]; const sd=SIDE[head];
+  const hstroke=`fill="${c.panel}" stroke="${c.line}" stroke-width="3"`;
+  let back="", front="", headEl="", ant="";
+
+  if(body==="feet"){
+    back+=`<ellipse cx="62" cy="146" rx="11" ry="7" ${hstroke}/>`+
+          `<ellipse cx="98" cy="146" rx="11" ry="7" ${hstroke}/>`;
+  }
+  if(top==="horns"){
+    back+=`<polygon points="52,${m.top+6} 40,${m.top-20} 64,${m.top+2}" ${hstroke} stroke-linejoin="round"/>`+
+          `<polygon points="108,${m.top+6} 120,${m.top-20} 96,${m.top+2}" ${hstroke} stroke-linejoin="round"/>`;
+  }
+  if(top==="ears"){
+    back+=`<path d="M48,${m.top+12} L52,${m.top-12} L72,${m.top+8} Z" ${hstroke} stroke-linejoin="round"/>`+
+          `<path d="M112,${m.top+12} L108,${m.top-12} L88,${m.top+8} Z" ${hstroke} stroke-linejoin="round"/>`;
+  }
+  if(top==="phones"){
+    back+=`<path d="M${sd.l+2},80 Q80,${m.top-14} ${sd.r-2},80" fill="none" stroke="${c.muted}" stroke-width="7" stroke-linecap="round"/>`;
+  }
+
+  if(head==="circle") headEl=`<circle cx="80" cy="80" r="62" ${hstroke}/>`;
+  else if(head==="hex") headEl=`<polygon points="80,16 138,48 138,112 80,144 22,112 22,48" ${hstroke} stroke-linejoin="round"/>`;
+  else if(head==="capsule") headEl=`<rect x="32" y="12" width="96" height="136" rx="48" ${hstroke}/>`;
+  else if(head==="pill") headEl=`<rect x="14" y="34" width="132" height="92" rx="46" ${hstroke}/>`;
+  else headEl=`<rect x="18" y="18" width="124" height="124" rx="40" ${hstroke}/>`;
+
+  if(top==="phones"){
+    front+=`<rect x="${sd.l-9}" y="68" width="20" height="34" rx="8" fill="${c.line}" stroke="${c.muted}" stroke-width="3"/>`+
+           `<rect x="${sd.r-11}" y="68" width="20" height="34" rx="8" fill="${c.line}" stroke="${c.muted}" stroke-width="3"/>`;
+  }
+
+  const EX1=60,EX2=100,EY=64;
+  let eyeEl="";
+  if(eyes==="dots") eyeEl=`<circle cx="${EX1}" cy="${EY}" r="5" fill="${c.text}"/><circle cx="${EX2}" cy="${EY}" r="5" fill="${c.text}"/>`;
+  else if(eyes==="ticks") eyeEl=`<rect x="${EX1-3}" y="${EY-9}" width="6" height="18" rx="3" fill="${c.text}"/><rect x="${EX2-3}" y="${EY-9}" width="6" height="18" rx="3" fill="${c.text}"/>`;
+  else if(eyes==="sleepy") eyeEl=`<path d="M${EX1-8},${EY} H${EX1+8}" stroke="${c.text}" stroke-width="5" stroke-linecap="round"/><path d="M${EX2-8},${EY} H${EX2+8}" stroke="${c.text}" stroke-width="5" stroke-linecap="round"/>`;
+  else if(eyes==="happy") eyeEl=`<path d="M${EX1-8},${EY+3} Q${EX1},${EY-9} ${EX1+8},${EY+3}" fill="none" stroke="${c.text}" stroke-width="5" stroke-linecap="round"/><path d="M${EX2-8},${EY+3} Q${EX2},${EY-9} ${EX2+8},${EY+3}" fill="none" stroke="${c.text}" stroke-width="5" stroke-linecap="round"/>`;
+  else if(eyes==="wide") eyeEl=`<circle cx="${EX1}" cy="${EY}" r="8" fill="${c.text}"/><circle cx="${EX1+2}" cy="${EY-2}" r="2.6" fill="${c.panel}"/><circle cx="${EX2}" cy="${EY}" r="8" fill="${c.text}"/><circle cx="${EX2+2}" cy="${EY-2}" r="2.6" fill="${c.panel}"/>`;
+
+  const mcol = mouth==="haum"? c.signal : c.muted;
+  const mpath = mouth==="haum"
+    ? "M52,96 H60 Q70,78 80,96 Q90,78 100,96 H108"
+    : "M52,96 H108";
+  const mouthEl=`<path d="${mpath}" fill="none" stroke="${mcol}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  if(top==="antenna") ant=`<line x1="80" y1="${m.top}" x2="80" y2="${m.top-16}" stroke="${c.muted}" stroke-width="3" stroke-linecap="round"/><circle cx="80" cy="${m.top-18}" r="4.5" fill="${c.signal}"/>`;
+
+  const inner = back+headEl+front+eyeEl+mouthEl+ant;
+  return `<svg width="${size}" height="${size}" viewBox="0 -12 160 184" xmlns="http://www.w3.org/2000/svg" fill="none">${inner}</svg>`;
+}
+
+const HEAD_OPTS=[{v:"squircle",l:"firkant"},{v:"circle",l:"rund"},{v:"hex",l:"sekskant"},{v:"capsule",l:"kapsel"},{v:"pill",l:"bred"}];
+const EYE_OPTS=[{v:"dots",l:"prikker"},{v:"ticks",l:"streker"},{v:"sleepy",l:"sovende"},{v:"happy",l:"glade"},{v:"wide",l:"store"},{v:"none",l:"ingen"}];
+const TOP_OPTS=[{v:"none",l:"ingen"},{v:"antenna",l:"antenne"},{v:"phones",l:"hodetlf."},{v:"horns",l:"horn"},{v:"ears",l:"ører"}];
+const BODY_OPTS=[{v:"none",l:"ingen"},{v:"feet",l:"føtter"}];
+const MOUTH_OPTS=[{v:"haum",l:"haum"},{v:"idle",l:"idle"}];
+
+const PRESETS=[
+  {name:"Lytter", note:"voice", cfg:{head:"squircle",eyes:"dots",top:"phones",body:"none",mouth:"haum"}},
+  {name:"Sender", note:"telemetri", cfg:{head:"circle",eyes:"ticks",top:"antenna",body:"feet",mouth:"haum"}},
+  {name:"Draug", note:"Valheim", cfg:{head:"hex",eyes:"sleepy",top:"horns",body:"none",mouth:"haum"}},
+  {name:"Node", note:"minimal", cfg:{head:"circle",eyes:"none",top:"none",body:"none",mouth:"haum"}},
+  {name:"Kompis", note:"snill", cfg:{head:"squircle",eyes:"wide",top:"ears",body:"feet",mouth:"haum"}},
+];
+
+function Toggle({options,value,onChange}){
+  return (
+    <div style={{display:"inline-flex",border:"1px solid var(--line)",borderRadius:10,padding:3,gap:3,flexWrap:"wrap"}}>
+      {options.map(o=>(
+        <button key={o.v} className="chip focusable" onClick={()=>onChange(o.v)}
+          style={{padding:"7px 12px",borderRadius:7,fontSize:13,
+            background:value===o.v?"var(--signal)":"transparent",
+            color:value===o.v?"var(--bg)":"var(--muted)",fontWeight:value===o.v?600:400}}>{o.l}</button>
+      ))}
+    </div>
+  );
+}
+function Group({label,value,set,options}){
+  return (
+    <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap",marginBottom:14}}>
+      <span className="eyebrow" style={{minWidth:64}}>{label}</span>
+      <Toggle value={value} onChange={set} options={options}/>
+    </div>
+  );
+}
+function Svg({html,size}){
+  return <div style={{width:size,height:size,lineHeight:0}} dangerouslySetInnerHTML={{__html:html}}/>;
+}
+
+function App(){
+  const [palId,setPalId]=useState("aske");
+  const c=PALS[palId].c;
+  const [cfg,setCfg]=useState(PRESETS[0].cfg);
+  const [copied,setCopied]=useState(false);
+
+  const root=useMemo(()=>{
+    const s={}; ["bg","panel","line","text","muted","signal"].forEach(k=>s["--"+k]=c[k]); return s;
+  },[c]);
+
+  const set=(k)=>(v)=>setCfg(p=>({...p,[k]:v}));
+  const big=buildMascot(cfg,c,220);
+  const svg160=buildMascot(cfg,c,160);
+
+  function shuffle(){
+    const pick=a=>a[Math.floor(Math.random()*a.length)].v;
+    setCfg({head:pick(HEAD_OPTS),eyes:pick(EYE_OPTS),top:pick(TOP_OPTS),body:pick(BODY_OPTS),mouth:"haum"});
+  }
+  function copySvg(){ navigator.clipboard?.writeText(buildMascot(cfg,c,160)); setCopied(true); setTimeout(()=>setCopied(false),1200); }
+
+  return (
+  <div style={{...root,background:"var(--bg)",color:"var(--text)",minHeight:"100vh",transition:"background .25s ease"}}>
+    <header style={{borderBottom:"1px solid var(--line)"}}>
+      <div className="wrap" style={{padding:"22px 24px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+        <span className="eyebrow">haum · maskot-lab</span>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <span className="eyebrow" style={{color:"var(--muted)"}}>palett</span>
+          <Toggle value={palId} onChange={setPalId} options={Object.keys(PALS).map(k=>({v:k,l:PALS[k].name}))}/>
+        </div>
+      </div>
+    </header>
+
+    <div className="wrap" style={{padding:"40px 24px 12px"}}>
+      <p style={{maxWidth:560,color:"var(--muted)",fontSize:15,marginBottom:28}}>
+        Munnen er konstant — den er pulsen, og pulsen betyr «haum». Alt <i>rundt</i> munnen er
+        det vi leter i her. Pulsen lyser i signal-fargen når den er på «haum».
+      </p>
+
+      <div style={{display:"flex",gap:32,flexWrap:"wrap",alignItems:"flex-start"}}>
+        {/* preview */}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+          <div style={{border:"1px solid var(--line)",borderRadius:20,background:"var(--panel)",padding:"24px 36px"}}>
+            <Svg html={big} size={220}/>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={shuffle} className="focusable lift"
+              style={{border:"1px solid var(--line)",borderRadius:8,padding:"8px 16px",fontSize:13}}>tilfeldig</button>
+            <button onClick={()=>setCfg(PRESETS[0].cfg)} className="focusable lift"
+              style={{border:"1px solid var(--line)",borderRadius:8,padding:"8px 16px",fontSize:13}}>nullstill</button>
+            <button onClick={copySvg} className="focusable lift"
+              style={{border:"1px solid var(--signal)",color:"var(--signal)",borderRadius:8,padding:"8px 16px",fontSize:13}}>
+              {copied?"kopiert ✓":"kopier SVG"}</button>
+          </div>
+        </div>
+
+        {/* controls */}
+        <div style={{flex:"1 1 380px",minWidth:300}}>
+          <Group label="hode" value={cfg.head} set={set("head")} options={HEAD_OPTS}/>
+          <Group label="øyne" value={cfg.eyes} set={set("eyes")} options={EYE_OPTS}/>
+          <Group label="topp" value={cfg.top} set={set("top")} options={TOP_OPTS}/>
+          <Group label="kropp" value={cfg.body} set={set("body")} options={BODY_OPTS}/>
+          <Group label="munn" value={cfg.mouth} set={set("mouth")} options={MOUTH_OPTS}/>
+        </div>
+      </div>
+    </div>
+
+    <div className="wrap"><hr style={{margin:"28px 0"}}/></div>
+
+    {/* presets */}
+    <div className="wrap" style={{paddingBottom:8}}>
+      <div className="eyebrow" style={{marginBottom:14}}>startpunkter — hver med en mening</div>
+      <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+        {PRESETS.map(p=>{
+          const sel=JSON.stringify(p.cfg)===JSON.stringify(cfg);
+          return (
+            <button key={p.name} onClick={()=>setCfg(p.cfg)} className="lift focusable"
+              style={{border:"1px solid",borderColor:sel?"var(--signal)":"var(--line)",background:"var(--panel)",
+                borderRadius:14,padding:"12px",width:118,textAlign:"center"}}>
+              <Svg html={buildMascot(p.cfg,c,72)} size={72}/>
+              <div style={{fontSize:13,fontWeight:600,marginTop:6}}>{p.name}</div>
+              <div style={{fontSize:11,color:"var(--muted)"}}>{p.note}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+
+    <div className="wrap"><hr style={{margin:"28px 0"}}/></div>
+
+    {/* recognizability */}
+    <div className="wrap" style={{paddingBottom:48}}>
+      <div className="eyebrow" style={{marginBottom:6}}>leses den som liten?</div>
+      <p style={{fontSize:13,color:"var(--muted)",marginBottom:18,maxWidth:520}}>
+        Maskoten skal funke som online-prikk og favicon. Hvis pulsen forsvinner her, er den for travel.
+      </p>
+      <div style={{display:"flex",gap:24,alignItems:"flex-end",flexWrap:"wrap"}}>
+        {[64,48,36,28].map(sz=>(
+          <div key={sz} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+            <Svg html={buildMascot(cfg,c,sz)} size={sz}/>
+            <span className="mono" style={{fontSize:11,color:"var(--muted)"}}>{sz}px</span>
+          </div>
+        ))}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <div style={{width:56,height:56,borderRadius:"50%",overflow:"hidden",background:"var(--panel)",
+            border:"1px solid var(--line)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <Svg html={buildMascot(cfg,c,52)} size={52}/>
+          </div>
+          <span className="mono" style={{fontSize:11,color:"var(--muted)"}}>avatar</span>
+        </div>
+      </div>
+    </div>
+
+    <footer style={{borderTop:"1px solid var(--line)",padding:"28px 0 56px"}}>
+      <div className="wrap" style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+        <span style={{fontSize:13,color:"var(--muted)"}}>
+          «kopier SVG» gir deg gjeldende maskot som ren SVG · munnen = pulsen = haum
+        </span>
+        <span className="eyebrow">haum ◂))</span>
+      </div>
+    </footer>
+  </div>);
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
