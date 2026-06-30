@@ -3,69 +3,75 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>haum — brand playground</title>
+<title>haum — workspace</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  :root{--bg:#07141C;--panel:#0C1F2A;--line:#16323F;--text:#DDEFF2;--muted:#6E8B95;--signal:#2FE6D6;--accent:#18A7C4;--warn:#FF7A3C}
+  :root{--bg:#15191A;--panel:#1E2426;--line:#2E3739;--text:#E7E3D6;--muted:#8A9590;--signal:#E2502A;--accent:#9FB1A6}
   html,body{background:var(--bg);color:var(--text)}
   body{font-family:-apple-system,"Segoe UI",system-ui,Roboto,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
-  .mono{font-family:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace}
-  .wrap{max-width:960px;margin:0 auto;padding:0 24px}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
   .eyebrow{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
-  a{color:var(--signal)}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-  input[type=text]{font-family:inherit}
+  a{color:var(--signal);text-decoration:none}
   .focusable:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:4px}
-  hr{border:none;border-top:1px solid var(--line);margin:0}
+  hr{border:none;border-top:1px solid var(--line)}
   ::selection{background:var(--signal);color:var(--bg)}
-  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+  .lift{transition:transform .14s ease,border-color .14s ease}
+  .lift:hover{transform:translateY(-2px)}
+  .chip{transition:background .12s ease,color .12s ease}
   .scan{animation:scan .62s cubic-bezier(.5,0,.2,1)}
   @keyframes scan{0%{transform:translateX(0);opacity:0}10%{opacity:1}100%{transform:translateX(108px);opacity:0}}
-  .lift{transition:transform .14s ease, border-color .14s ease}
-  .lift:hover{transform:translateY(-2px)}
-  .sw:hover{filter:brightness(1.08)}
-  .chip{transition:background .12s ease,color .12s ease}
+  .app{display:flex;min-height:100vh}
+  .rail{width:216px;flex-shrink:0;border-right:1px solid var(--line);padding:22px 16px;position:sticky;top:0;height:100vh;overflow:auto}
+  .navlist{display:flex;flex-direction:column;gap:3px;margin-top:24px}
+  .main{flex:1;min-width:0;max-width:980px}
+  .nav{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 12px;border-radius:9px;font-size:14px;color:var(--muted)}
+  .nav.on{background:var(--panel);color:var(--text)}
+  .nav:hover{color:var(--text)}
+  @media (max-width:760px){
+    .app{flex-direction:column}
+    .rail{width:auto;height:auto;position:static;border-right:none;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:14px 16px}
+    .navlist{flex-direction:row;margin-top:0;overflow-x:auto}
+    .nav{white-space:nowrap;padding:8px 12px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel" data-presets="react">
-const {useState,useMemo,useRef,useEffect} = React;
+const {useState,useMemo,useEffect} = React;
 
-const ROLES = ["bg","panel","line","text","muted","signal","accent","warn"];
-const ROLE_LABEL = {bg:"bakgrunn",panel:"flate",line:"linje",text:"tekst",muted:"dempet",signal:"signal",accent:"aksent",warn:"varsel"};
-
+/* ============ brand data ============ */
 const PALETTES = [
+  {id:"aske", name:"Aske", fav:true, note:"tåke, bark og ett glør fra essa (Valheim)",
+   c:{bg:"#15191A",panel:"#1E2426",line:"#2E3739",text:"#E7E3D6",muted:"#8A9590",signal:"#E2502A",accent:"#9FB1A6",warn:"#E2A23A"}},
+  {id:"natt", name:"Natt", fav:true, note:"deepslate og én gnist glowstone (Minecraft)",
+   c:{bg:"#0F1116",panel:"#181B22",line:"#262A33",text:"#E6E8EC",muted:"#7C828E",signal:"#F4B740",accent:"#4FA3D1",warn:"#E2502A"}},
   {id:"dyp", name:"Dypvann", note:"timene under overflaten (Subnautica)",
    c:{bg:"#07141C",panel:"#0C1F2A",line:"#16323F",text:"#DDEFF2",muted:"#6E8B95",signal:"#2FE6D6",accent:"#18A7C4",warn:"#FF7A3C"}},
-  {id:"aske", name:"Aske", note:"tåke, bark og ett glør fra essa (Valheim)",
-   c:{bg:"#15191A",panel:"#1E2426",line:"#2E3739",text:"#E7E3D6",muted:"#8A9590",signal:"#E2502A",accent:"#9FB1A6",warn:"#E2A23A"}},
   {id:"voice", name:"Voice", note:"fargen kanalen lyser i når noen snakker",
    c:{bg:"#1B1D24",panel:"#24262E",line:"#33353F",text:"#E9EAF0",muted:"#8A8D9A",signal:"#3DDC97",accent:"#6B74F0",warn:"#F0A93B"}},
-  {id:"natt", name:"Natt", note:"deepslate og én gnist glowstone (Minecraft)",
-   c:{bg:"#0F1116",panel:"#181B22",line:"#262A33",text:"#E6E8EC",muted:"#7C828E",signal:"#F4B740",accent:"#4FA3D1",warn:"#E2502A"}},
   {id:"mono", name:"Mono +1", note:"disiplin: nesten-svart, bein, og én farge dere eier",
    c:{bg:"#101012",panel:"#181819",line:"#2A2A2C",text:"#ECEAE4",muted:"#7E7C78",signal:"#F24B3D",accent:"#F24B3D",warn:"#E0B23A"}},
 ];
+const ROLES=["bg","panel","line","text","muted","signal","accent","warn"];
+const ROLE_LABEL={bg:"bakgrunn",panel:"flate",line:"linje",text:"tekst",muted:"dempet",signal:"signal",accent:"aksent",warn:"varsel"};
+const palById=(id)=>PALETTES.find(p=>p.id===id)||PALETTES[0];
 
-// ---- the signature: the haum pulse ----
-function Pulse({size=120,stroke=6,scanKey=0,scanning=false,color="var(--signal)",baseline=true}){
-  const w=120,h=48;
+/* ============ the signature: pulse + marks ============ */
+function Pulse({size=120,stroke=6,scanKey=0,scanning=false,baseline=true}){
   return (
-    <svg width={size} height={size*h/w} viewBox={`0 0 ${w} ${h}`} fill="none" aria-hidden="true"
-      style={{display:"block",overflow:"visible"}}>
+    <svg width={size} height={size*48/120} viewBox="0 0 120 48" fill="none" style={{display:"block",overflow:"visible"}} aria-hidden="true">
       {baseline && <line x1="2" y1="30" x2="118" y2="30" stroke="var(--line)" strokeWidth="2"/>}
-      <path d="M2,30 H24 Q38,4 52,30 H60 Q74,4 88,30 H118" stroke={color}
-        strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"/>
-      {scanning &&
-        <circle key={scanKey} className="scan" cx="6" cy="30" r="4.5" fill={color}/>}
+      <path d="M2,30 H24 Q38,4 52,30 H60 Q74,4 88,30 H118" stroke="var(--signal)" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"/>
+      {scanning && <circle key={scanKey} className="scan" cx="6" cy="30" r="4.5" fill="var(--signal)"/>}
     </svg>
   );
 }
-
 function Ring({size=120}){
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" aria-hidden="true">
@@ -76,303 +82,314 @@ function Ring({size=120}){
     </svg>
   );
 }
-
 function Monogram({size=120}){
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" aria-hidden="true">
       <rect x="20" y="22" width="12" height="76" rx="2" fill="var(--text)"/>
       <rect x="88" y="22" width="12" height="76" rx="2" fill="var(--text)"/>
-      <path d="M32,60 H44 Q52,42 60,60 Q68,78 76,60 H88" stroke="var(--signal)"
-        strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M32,60 H44 Q52,42 60,60 Q68,78 76,60 H88" stroke="var(--signal)" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
     </svg>
   );
 }
-
 function Mark({concept,size,scanKey,scanning}){
   if(concept==="ring") return <Ring size={size}/>;
   if(concept==="monogram") return <Monogram size={size}/>;
   return <Pulse size={size} scanKey={scanKey} scanning={scanning}/>;
 }
-
-// ---- wordmark ----
 function Wordmark({style,scanKey,scanning}){
   const base={lineHeight:1,userSelect:"none"};
-  if(style==="mono") return (
-    <span className="mono" style={{...base,fontSize:"clamp(40px,9vw,76px)",fontWeight:700,letterSpacing:"-.02em",color:"var(--text)"}}>
-      haum<span style={{color:"var(--signal)"}}>·</span>haum
-    </span>);
-  if(style==="pixel") return (
-    <span style={{...base,fontFamily:'ui-monospace,monospace',fontSize:"clamp(38px,8.5vw,70px)",fontWeight:800,letterSpacing:".06em",color:"var(--text)",textShadow:"3px 3px 0 var(--accent)"}}>
-      HAUM
-    </span>);
-  // geometric (default): tight lowercase + the pulse riding the baseline
+  if(style==="mono") return <span className="mono" style={{...base,fontSize:"clamp(38px,8vw,68px)",fontWeight:700,letterSpacing:"-.02em",color:"var(--text)"}}>haum<span style={{color:"var(--signal)"}}>·</span>haum</span>;
+  if(style==="pixel") return <span style={{...base,fontFamily:"ui-monospace,monospace",fontSize:"clamp(34px,7.5vw,62px)",fontWeight:800,letterSpacing:".06em",color:"var(--text)",textShadow:"3px 3px 0 var(--accent)"}}>HAUM</span>;
   return (
     <span style={{...base,display:"inline-flex",alignItems:"flex-end",gap:"6px"}}>
-      <span style={{fontSize:"clamp(46px,10vw,86px)",fontWeight:800,letterSpacing:"-.04em",color:"var(--text)"}}>haum</span>
-      <span style={{marginBottom:"10px"}}><Pulse size={64} stroke={7} scanKey={scanKey} scanning={scanning} baseline={false}/></span>
-    </span>);
-}
-
-// ---- mascot ----
-function Mascot({active,size=150}){
-  const mouth = active
-    ? "M40,86 H52 Q62,66 72,86 Q82,106 92,86 H104"   // double pulse
-    : "M44,90 H100";                                  // idle flat
-  return (
-    <svg width={size} height={size} viewBox="0 0 144 144" fill="none" aria-hidden="true">
-      <rect x="14" y="14" width="116" height="116" rx="34" fill="var(--panel)" stroke="var(--line)" strokeWidth="3"/>
-      <circle cx="52" cy="58" r={active?5.5:4} fill="var(--text)"/>
-      <circle cx="92" cy="58" r={active?5.5:4} fill="var(--text)"/>
-      <path d={mouth} stroke={active?"var(--signal)":"var(--muted)"} strokeWidth="7"
-        strokeLinecap="round" strokeLinejoin="round" fill="none"
-        style={{transition:"stroke .2s ease"}}/>
-      {active && <line x1="44" y1="90" x2="100" y2="90" stroke="var(--line)" strokeWidth="2"/>}
-    </svg>
+      <span style={{fontSize:"clamp(42px,9vw,78px)",fontWeight:800,letterSpacing:"-.04em",color:"var(--text)"}}>haum</span>
+      <span style={{marginBottom:"9px"}}><Pulse size={58} stroke={7} scanKey={scanKey} scanning={scanning} baseline={false}/></span>
+    </span>
   );
 }
 
-// ---- prefix machine ----
-const DICT = {minecraft:"Haumcraft",valheim:"Haumheim",subnautica:"Haumnautica",
-  discord:"Haumcord",factorio:"Haumtorio",terraria:"Haumraria",satisfactory:"Haumfactory"};
-function haumify(raw){
-  const w=(raw||"").trim();
-  if(!w) return {out:"haum haum",guess:false};
-  const key=w.toLowerCase();
-  if(DICT[key]) return {out:DICT[key],guess:false};
-  const vg=/[aeiouyæøåAEIOUYÆØÅ]+/g;
-  let m,starts=[];
-  while((m=vg.exec(w))!==null) starts.push(m.index);
-  if(starts.length>=2){
-    let cut=starts[1];
-    while(cut>0 && /[^aeiouyæøåAEIOUYÆØÅ]/.test(w[cut-1])) cut--;
-    return {out:"Haum"+w.slice(cut).toLowerCase(),guess:true};
-  }
-  return {out:"Haum-"+w.toLowerCase(),guess:true};
+/* ============ mascot builder (mouth = pulse, constant) ============ */
+const HEADS={squircle:{top:18},circle:{top:18},hex:{top:16},capsule:{top:12},pill:{top:34}};
+const SIDE={squircle:{l:18,r:142},circle:{l:18,r:142},hex:{l:22,r:138},capsule:{l:32,r:128},pill:{l:14,r:146}};
+function buildMascot(cfg,c,size){
+  const {head,eyes,top,body,mouth}=cfg; const m=HEADS[head], sd=SIDE[head];
+  const hs=`fill="${c.panel}" stroke="${c.line}" stroke-width="3"`;
+  let back="",front="",headEl="",ant="";
+  if(body==="feet") back+=`<ellipse cx="62" cy="146" rx="11" ry="7" ${hs}/><ellipse cx="98" cy="146" rx="11" ry="7" ${hs}/>`;
+  if(top==="horns") back+=`<polygon points="52,${m.top+6} 40,${m.top-20} 64,${m.top+2}" ${hs} stroke-linejoin="round"/><polygon points="108,${m.top+6} 120,${m.top-20} 96,${m.top+2}" ${hs} stroke-linejoin="round"/>`;
+  if(top==="ears") back+=`<path d="M48,${m.top+12} L52,${m.top-12} L72,${m.top+8} Z" ${hs} stroke-linejoin="round"/><path d="M112,${m.top+12} L108,${m.top-12} L88,${m.top+8} Z" ${hs} stroke-linejoin="round"/>`;
+  if(top==="phones") back+=`<path d="M${sd.l+2},80 Q80,${m.top-14} ${sd.r-2},80" fill="none" stroke="${c.muted}" stroke-width="7" stroke-linecap="round"/>`;
+  if(head==="circle") headEl=`<circle cx="80" cy="80" r="62" ${hs}/>`;
+  else if(head==="hex") headEl=`<polygon points="80,16 138,48 138,112 80,144 22,112 22,48" ${hs} stroke-linejoin="round"/>`;
+  else if(head==="capsule") headEl=`<rect x="32" y="12" width="96" height="136" rx="48" ${hs}/>`;
+  else if(head==="pill") headEl=`<rect x="14" y="34" width="132" height="92" rx="46" ${hs}/>`;
+  else headEl=`<rect x="18" y="18" width="124" height="124" rx="40" ${hs}/>`;
+  if(top==="phones") front+=`<rect x="${sd.l-9}" y="68" width="20" height="34" rx="8" fill="${c.line}" stroke="${c.muted}" stroke-width="3"/><rect x="${sd.r-11}" y="68" width="20" height="34" rx="8" fill="${c.line}" stroke="${c.muted}" stroke-width="3"/>`;
+  const EX1=60,EX2=100,EY=64; let eyeEl="";
+  if(eyes==="dots") eyeEl=`<circle cx="${EX1}" cy="${EY}" r="5" fill="${c.text}"/><circle cx="${EX2}" cy="${EY}" r="5" fill="${c.text}"/>`;
+  else if(eyes==="ticks") eyeEl=`<rect x="${EX1-3}" y="${EY-9}" width="6" height="18" rx="3" fill="${c.text}"/><rect x="${EX2-3}" y="${EY-9}" width="6" height="18" rx="3" fill="${c.text}"/>`;
+  else if(eyes==="sleepy") eyeEl=`<path d="M${EX1-8},${EY} H${EX1+8}" stroke="${c.text}" stroke-width="5" stroke-linecap="round"/><path d="M${EX2-8},${EY} H${EX2+8}" stroke="${c.text}" stroke-width="5" stroke-linecap="round"/>`;
+  else if(eyes==="happy") eyeEl=`<path d="M${EX1-8},${EY+3} Q${EX1},${EY-9} ${EX1+8},${EY+3}" fill="none" stroke="${c.text}" stroke-width="5" stroke-linecap="round"/><path d="M${EX2-8},${EY+3} Q${EX2},${EY-9} ${EX2+8},${EY+3}" fill="none" stroke="${c.text}" stroke-width="5" stroke-linecap="round"/>`;
+  else if(eyes==="wide") eyeEl=`<circle cx="${EX1}" cy="${EY}" r="8" fill="${c.text}"/><circle cx="${EX1+2}" cy="${EY-2}" r="2.6" fill="${c.panel}"/><circle cx="${EX2}" cy="${EY}" r="8" fill="${c.text}"/><circle cx="${EX2+2}" cy="${EY-2}" r="2.6" fill="${c.panel}"/>`;
+  const mcol=mouth==="haum"?c.signal:c.muted;
+  const mp=mouth==="haum"?"M52,96 H60 Q70,78 80,96 Q90,78 100,96 H108":"M52,96 H108";
+  const mouthEl=`<path d="${mp}" fill="none" stroke="${mcol}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if(top==="antenna") ant=`<line x1="80" y1="${m.top}" x2="80" y2="${m.top-16}" stroke="${c.muted}" stroke-width="3" stroke-linecap="round"/><circle cx="80" cy="${m.top-18}" r="4.5" fill="${c.signal}"/>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 -12 160 184" xmlns="http://www.w3.org/2000/svg" fill="none">${back+headEl+front+eyeEl+mouthEl+ant}</svg>`;
 }
+const HEAD_OPTS=[{v:"squircle",l:"firkant"},{v:"circle",l:"rund"},{v:"hex",l:"sekskant"},{v:"capsule",l:"kapsel"},{v:"pill",l:"bred"}];
+const EYE_OPTS=[{v:"dots",l:"prikker"},{v:"ticks",l:"streker"},{v:"sleepy",l:"sovende"},{v:"happy",l:"glade"},{v:"wide",l:"store"},{v:"none",l:"ingen"}];
+const TOP_OPTS=[{v:"none",l:"ingen"},{v:"antenna",l:"antenne"},{v:"phones",l:"hodetlf."},{v:"horns",l:"horn"},{v:"ears",l:"ører"}];
+const BODY_OPTS=[{v:"none",l:"ingen"},{v:"feet",l:"føtter"}];
+const MOUTH_OPTS=[{v:"haum",l:"haum"},{v:"idle",l:"idle"}];
+const MASCOT_PRESETS=[
+  {name:"Lytter",note:"voice",cfg:{head:"squircle",eyes:"dots",top:"phones",body:"none",mouth:"haum"}},
+  {name:"Sender",note:"telemetri",cfg:{head:"circle",eyes:"ticks",top:"antenna",body:"feet",mouth:"haum"}},
+  {name:"Draug",note:"Valheim",cfg:{head:"hex",eyes:"sleepy",top:"horns",body:"none",mouth:"haum"}},
+  {name:"Node",note:"minimal",cfg:{head:"circle",eyes:"none",top:"none",body:"none",mouth:"haum"}},
+  {name:"Kompis",note:"snill",cfg:{head:"squircle",eyes:"wide",top:"ears",body:"feet",mouth:"haum"}},
+];
 
-// ---- small ui helpers ----
-function Eyebrow({children}){return <div className="eyebrow" style={{marginBottom:14}}>{children}</div>;}
-function Section({label,children,top}){
-  return (
-    <section style={{padding:`${top?56:44}px 0`}}>
-      <div className="wrap">
-        <Eyebrow>{label}</Eyebrow>
-        {children}
-      </div>
-    </section>
-  );
-}
+/* ============ shared ui ============ */
 function Toggle({options,value,onChange}){
   return (
     <div style={{display:"inline-flex",border:"1px solid var(--line)",borderRadius:10,padding:3,gap:3,flexWrap:"wrap"}}>
       {options.map(o=>(
         <button key={o.v} className="chip focusable" onClick={()=>onChange(o.v)}
-          style={{padding:"7px 13px",borderRadius:7,fontSize:13,
-            background:value===o.v?"var(--signal)":"transparent",
-            color:value===o.v?"var(--bg)":"var(--muted)",fontWeight:value===o.v?600:400}}>
-          {o.l}
-        </button>
+          style={{padding:"7px 12px",borderRadius:7,fontSize:13,background:value===o.v?"var(--signal)":"transparent",
+            color:value===o.v?"var(--bg)":"var(--muted)",fontWeight:value===o.v?600:400}}>{o.l}</button>
       ))}
     </div>
   );
 }
-
-function App(){
-  const [palId,setPalId]=useState("dyp");
-  const preset=PALETTES.find(p=>p.id===palId);
-  const [colors,setColors]=useState(preset.c);
-  const [wstyle,setWstyle]=useState("geo");
-  const [concept,setConcept]=useState("pulse");
-  const [mascot,setMascot]=useState(false);
-  const [scanKey,setScanKey]=useState(0);
-  const [scanning,setScanning]=useState(false);
-  const [pfx,setPfx]=useState("Minecraft");
-  const [copied,setCopied]=useState("");
-
-  useEffect(()=>{ setColors(PALETTES.find(p=>p.id===palId).c); },[palId]);
-
-  const rootStyle = useMemo(()=>{
-    const s={}; ROLES.forEach(r=>s["--"+r]=colors[r]); return s;
-  },[colors]);
-
-  function haum(){
-    setScanKey(k=>k+1); setScanning(true); setMascot(true);
-    setTimeout(()=>setMascot(false),900);
-  }
-  function setColor(role,val){ setColors(c=>({...c,[role]:val})); }
-
-  const cssExport = ":root{\n"+ROLES.map(r=>`  --haum-${r}: ${colors[r]};`).join("\n")+"\n}";
-  const jsonExport = JSON.stringify(colors,null,2);
-  function copy(txt,tag){ navigator.clipboard?.writeText(txt); setCopied(tag); setTimeout(()=>setCopied(""),1200); }
-
-  const pf=haumify(pfx);
-
+function Group({label,value,set,options}){
   return (
-  <div style={{...rootStyle,background:"var(--bg)",color:"var(--text)",minHeight:"100vh",transition:"background .25s ease"}}>
+    <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap",marginBottom:14}}>
+      <span className="eyebrow" style={{minWidth:64}}>{label}</span>
+      <Toggle value={value} onChange={set} options={options}/>
+    </div>
+  );
+}
+function Svg({html,size}){ return <div style={{width:size,height:size,lineHeight:0}} dangerouslySetInnerHTML={{__html:html}}/>; }
+function Page({title,sub,children}){
+  return (
+    <div style={{padding:"34px 32px 64px"}}>
+      <div className="eyebrow" style={{marginBottom:sub?6:22}}>{title}</div>
+      {sub && <p style={{color:"var(--muted)",fontSize:15,maxWidth:600,marginBottom:26}}>{sub}</p>}
+      {children}
+    </div>
+  );
+}
+function copyText(t,done){ try{navigator.clipboard.writeText(t);}catch(e){} done&&done(); }
 
-    {/* hero */}
-    <header style={{borderBottom:"1px solid var(--line)"}}>
-      <div className="wrap" style={{padding:"22px 24px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span className="eyebrow">haum · brand playground</span>
-        <span className="eyebrow" style={{color:"var(--muted)"}}>est. ~2015 · 10 år</span>
-      </div>
-      <div className="wrap" style={{padding:"40px 24px 56px",textAlign:"center"}}>
-        <div style={{display:"flex",justifyContent:"center",marginBottom:24}}>
-          <Wordmark style={wstyle} scanKey={scanKey} scanning={scanning}/>
+/* ============ TOOL: oversikt ============ */
+function Home({brand,go}){
+  const [scanKey,setScanKey]=useState(0),[scanning,setScanning]=useState(false);
+  function haum(){ setScanKey(k=>k+1); setScanning(true); setTimeout(()=>setScanning(false),700); }
+  const pal=palById(brand.palId);
+  return (
+    <Page title="oversikt">
+      <div style={{textAlign:"center",padding:"20px 0 8px"}}>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:22}}>
+          <Wordmark style={brand.wordmark} scanKey={scanKey} scanning={scanning}/>
         </div>
-        <p style={{maxWidth:520,margin:"0 auto 28px",color:"var(--muted)",fontSize:16}}>
-          «haum haum» er lyden av at en haumie er til stede — et signal sagt idet noen kobler seg på.
-          Hele identiteten henger på den ene pulsen.
+        <p style={{maxWidth:520,margin:"0 auto 24px",color:"var(--muted)",fontSize:16}}>
+          «haum haum» er lyden av at en haumie er til stede. Hele identiteten henger på pulsen — den betyr «haum».
         </p>
-        <button onClick={haum} className="lift focusable"
-          style={{border:"1px solid var(--signal)",color:"var(--signal)",background:"transparent",
-            padding:"12px 26px",borderRadius:99,fontSize:15,fontWeight:600,letterSpacing:".02em"}}>
-          haum ◂)) 
-        </button>
-        <div style={{display:"flex",justifyContent:"center",marginTop:34}}>
-          <Mark concept={concept} size={120} scanKey={scanKey} scanning={scanning}/>
-        </div>
+        <button onClick={haum} className="lift focusable" style={{border:"1px solid var(--signal)",color:"var(--signal)",padding:"12px 26px",borderRadius:99,fontSize:15,fontWeight:600}}>haum ◂))</button>
       </div>
-    </header>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:14,marginTop:40}}>
+        <button onClick={()=>go("palett")} className="lift focusable" style={{textAlign:"left",border:"1px solid var(--line)",background:"var(--panel)",borderRadius:14,padding:16}}>
+          <div className="eyebrow" style={{marginBottom:10}}>palett</div>
+          <div style={{display:"flex",gap:5,marginBottom:8}}>{["bg","panel","signal","accent","warn"].map(r=>(<span key={r} style={{width:22,height:22,borderRadius:5,background:brand.colors[r],border:"1px solid rgba(255,255,255,.08)"}}/>))}</div>
+          <div style={{fontSize:14,fontWeight:600}}>{pal.name}</div>
+        </button>
+        <button onClick={()=>go("maskot")} className="lift focusable" style={{border:"1px solid var(--line)",background:"var(--panel)",borderRadius:14,padding:16,display:"flex",flexDirection:"column",alignItems:"flex-start"}}>
+          <div className="eyebrow" style={{marginBottom:6}}>maskot</div>
+          <Svg html={buildMascot(brand.mascot,brand.colors,84)} size={84}/>
+        </button>
+        <button onClick={()=>go("logo")} className="lift focusable" style={{border:"1px solid var(--line)",background:"var(--panel)",borderRadius:14,padding:16,display:"flex",flexDirection:"column",alignItems:"flex-start",gap:10}}>
+          <div className="eyebrow">merke</div>
+          <Mark concept={brand.mark} size={64}/>
+          <div style={{fontSize:13,color:"var(--muted)"}}>ordmerke: {brand.wordmark}</div>
+        </button>
+      </div>
+    </Page>
+  );
+}
 
-    {/* palette */}
-    <Section label="palett — hentet fra deres egen verden, ikke en generisk gamer-kombo" top>
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:8}}>
+/* ============ TOOL: palett ============ */
+function PaletteTool({brand,setPal,setColor}){
+  const [copied,setCopied]=useState("");
+  const css=":root{\n"+ROLES.map(r=>`  --haum-${r}: ${brand.colors[r]};`).join("\n")+"\n}";
+  const json=JSON.stringify(brand.colors,null,2);
+  function cp(t,tag){ copyText(t,()=>{setCopied(tag);setTimeout(()=>setCopied(""),1200);}); }
+  return (
+    <Page title="palett" sub="Forankret i deres egen verden, ikke en generisk gamer-kombo. Aske og Natt er favorittene — resten er der for å sammenligne. Alt er editerbart og temaer hele workspacet.">
+      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
         {PALETTES.map(p=>(
-          <button key={p.id} onClick={()=>setPalId(p.id)} className="lift focusable"
-            style={{textAlign:"left",border:"1px solid",borderColor:palId===p.id?"var(--signal)":"var(--line)",
-              background:"var(--panel)",borderRadius:12,padding:"12px 14px",minWidth:150,flex:"1 1 150px"}}>
-            <div style={{display:"flex",gap:4,marginBottom:8}}>
-              {["bg","panel","signal","accent","warn"].map(r=>(
-                <span key={r} style={{width:16,height:16,borderRadius:4,background:p.c[r],border:"1px solid rgba(255,255,255,.08)"}}/>
-              ))}
+          <button key={p.id} onClick={()=>setPal(p.id)} className="lift focusable" style={{textAlign:"left",border:"1px solid",borderColor:brand.palId===p.id?"var(--signal)":"var(--line)",background:"var(--panel)",borderRadius:12,padding:"12px 14px",minWidth:158,flex:"1 1 158px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+              <div style={{display:"flex",gap:4}}>{["bg","panel","signal","accent","warn"].map(r=>(<span key={r} style={{width:16,height:16,borderRadius:4,background:p.c[r],border:"1px solid rgba(255,255,255,.08)"}}/>))}</div>
+              {p.fav && <span className="mono" style={{fontSize:10,color:"var(--signal)"}}>★ favoritt</span>}
             </div>
             <div style={{fontSize:14,fontWeight:600}}>{p.name}</div>
             <div style={{fontSize:12,color:"var(--muted)",marginTop:2}}>{p.note}</div>
           </button>
         ))}
       </div>
-
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(104px,1fr))",gap:10,marginTop:18}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(104px,1fr))",gap:10,marginTop:20}}>
         {ROLES.map(r=>(
           <div key={r} style={{border:"1px solid var(--line)",borderRadius:10,overflow:"hidden",background:"var(--panel)"}}>
-            <label style={{display:"block",height:54,background:colors[r],cursor:"pointer",position:"relative"}} className="sw">
-              <input type="color" value={colors[r]} onChange={e=>setColor(r,e.target.value)}
-                style={{opacity:0,width:"100%",height:"100%",cursor:"pointer"}} aria-label={ROLE_LABEL[r]}/>
+            <label style={{display:"block",height:54,background:brand.colors[r],cursor:"pointer"}}>
+              <input type="color" value={brand.colors[r]} onChange={e=>setColor(r,e.target.value)} style={{opacity:0,width:"100%",height:"100%",cursor:"pointer"}} aria-label={ROLE_LABEL[r]}/>
             </label>
-            <div style={{padding:"7px 9px"}}>
-              <div style={{fontSize:11,color:"var(--muted)"}}>{ROLE_LABEL[r]}</div>
-              <div className="mono" style={{fontSize:12}}>{colors[r].toUpperCase()}</div>
-            </div>
+            <div style={{padding:"7px 9px"}}><div style={{fontSize:11,color:"var(--muted)"}}>{ROLE_LABEL[r]}</div><div className="mono" style={{fontSize:12}}>{brand.colors[r].toUpperCase()}</div></div>
           </div>
         ))}
       </div>
-
-      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:18}}>
-        <button onClick={()=>copy(cssExport,"css")} className="focusable"
-          style={{border:"1px solid var(--line)",borderRadius:8,padding:"9px 16px",fontSize:13,color:"var(--text)"}}>
-          {copied==="css"?"kopiert ✓":"kopier CSS-variabler"}
-        </button>
-        <button onClick={()=>copy(jsonExport,"json")} className="focusable"
-          style={{border:"1px solid var(--line)",borderRadius:8,padding:"9px 16px",fontSize:13,color:"var(--text)"}}>
-          {copied==="json"?"kopiert ✓":"kopier JSON (tokens)"}
-        </button>
-        <span style={{fontSize:12,color:"var(--muted)",alignSelf:"center"}}>
-          → samme tokens kan drive UI-et på server-plattformen
-        </span>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:20}}>
+        <button onClick={()=>cp(css,"css")} className="focusable" style={{border:"1px solid var(--line)",borderRadius:8,padding:"9px 16px",fontSize:13,color:"var(--text)"}}>{copied==="css"?"kopiert ✓":"kopier CSS-variabler"}</button>
+        <button onClick={()=>cp(json,"json")} className="focusable" style={{border:"1px solid var(--line)",borderRadius:8,padding:"9px 16px",fontSize:13,color:"var(--text)"}}>{copied==="json"?"kopiert ✓":"kopier JSON (tokens)"}</button>
+        <span style={{fontSize:12,color:"var(--muted)",alignSelf:"center"}}>→ samme tokens kan drive server-plattformen</span>
       </div>
-    </Section>
-
-    <div className="wrap"><hr/></div>
-
-    {/* logo lab */}
-    <Section label="logo-lab — sammenlign retninger live (de gamle Habbo-vibba er borte)">
-      <div style={{display:"flex",gap:24,flexWrap:"wrap",marginBottom:24}}>
-        <div>
-          <div style={{fontSize:12,color:"var(--muted)",marginBottom:8}}>ordmerke</div>
-          <Toggle value={wstyle} onChange={setWstyle} options={[
-            {v:"geo",l:"geometrisk"},{v:"mono",l:"terminal"},{v:"pixel",l:"pixel (flat)"}]}/>
-        </div>
-        <div>
-          <div style={{fontSize:12,color:"var(--muted)",marginBottom:8}}>merke</div>
-          <Toggle value={concept} onChange={setConcept} options={[
-            {v:"pulse",l:"puls"},{v:"monogram",l:"h-monogram"},{v:"ring",l:"presence-ring"}]}/>
-        </div>
-      </div>
-      <div style={{border:"1px solid var(--line)",borderRadius:16,background:"var(--panel)",
-        padding:"48px 24px",display:"flex",flexWrap:"wrap",gap:48,alignItems:"center",justifyContent:"center"}}>
-        <Wordmark style={wstyle} scanKey={scanKey} scanning={scanning}/>
-        <Mark concept={concept} size={104} scanKey={scanKey} scanning={scanning}/>
-      </div>
-      <p style={{fontSize:13,color:"var(--muted)",marginTop:14,maxWidth:620}}>
-        h-monogrammet er favoritten min som emblem: en vanlig H der tverrstreken er pulsen.
-        Leses som bokstav og som signal samtidig, og er like rent å bygge i Minecraft som å bruke som favicon.
-      </p>
-    </Section>
-
-    <div className="wrap"><hr/></div>
-
-    {/* mascot */}
-    <Section label="maskot — med en grunn til å finnes">
-      <div style={{display:"flex",gap:32,flexWrap:"wrap",alignItems:"center"}}>
-        <div style={{border:"1px solid var(--line)",borderRadius:16,background:"var(--panel)",padding:28,
-          display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
-          <Mascot active={mascot}/>
-          <button onClick={()=>setMascot(m=>!m)} className="focusable"
-            style={{border:"1px solid var(--line)",borderRadius:8,padding:"7px 16px",fontSize:13,color:"var(--text)"}}>
-            {mascot?"idle":"haum"}
-          </button>
-        </div>
-        <div style={{flex:"1 1 320px",minWidth:280}}>
-          <p style={{marginBottom:14}}>
-            Maskoten er <b>den som lager haumet</b>. Ansiktet er nesten bare en munn — og munnen
-            er pulsen. Stille linje når den er idle, dobbel-puls i signal-fargen når en haumie joiner.
-          </p>
-          <p style={{color:"var(--muted)",fontSize:14}}>
-            Derfor er den ikke bare pynt: den er en <b>online-/presence-indikator</b>. Samme glyph
-            kan vise hvem som er på i Discord, lyse opp i et server-event på plattformen, eller stå
-            som statue in-game. Den gjør én ekte jobb.
-          </p>
-        </div>
-      </div>
-    </Section>
-
-    <div className="wrap"><hr/></div>
-
-    {/* prefix */}
-    <Section label="prefiks-maskin — regelen er smak, ikke matte">
-      <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
-        <input type="text" value={pfx} onChange={e=>setPfx(e.target.value)}
-          className="focusable" placeholder="skriv et spill eller ord…"
-          style={{background:"var(--panel)",border:"1px solid var(--line)",borderRadius:10,
-            padding:"12px 16px",fontSize:16,color:"var(--text)",minWidth:220}}/>
-        <span style={{fontSize:24,color:"var(--muted)"}}>→</span>
-        <span style={{fontSize:28,fontWeight:700}}>
-          <span style={{color:"var(--signal)"}}>{pf.out.slice(0,4)}</span>{pf.out.slice(4)}
-        </span>
-        {pf.guess && <span className="mono" style={{fontSize:11,color:"var(--muted)",border:"1px solid var(--line)",borderRadius:6,padding:"3px 7px"}}>gjett · rediger fritt</span>}
-      </div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:16}}>
-        {["Minecraft","Valheim","Subnautica","Discord","Factorio"].map(x=>(
-          <button key={x} onClick={()=>setPfx(x)} className="chip focusable"
-            style={{border:"1px solid var(--line)",borderRadius:99,padding:"6px 13px",fontSize:13,color:"var(--muted)"}}>
-            {x}
-          </button>
-        ))}
-      </div>
-    </Section>
-
-    <footer style={{borderTop:"1px solid var(--line)",padding:"32px 0 56px"}}>
-      <div className="wrap" style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
-        <span style={{fontSize:13,color:"var(--muted)"}}>
-          rediger JSX-en rett i <span className="mono">index.html</span> · ingen build · push = live på GitHub Pages
-        </span>
-        <span className="eyebrow">haum ◂))</span>
-      </div>
-    </footer>
-  </div>);
+    </Page>
+  );
 }
 
+/* ============ TOOL: logo ============ */
+function LogoTool({brand,update}){
+  return (
+    <Page title="logo" sub="Pulsen er kjerne-glyfen — den betyr «haum» og er det vi kjenner igjen. H-monogrammet er degradert til sekundær (en H kan stå for hva som helst).">
+      <div style={{display:"flex",gap:24,flexWrap:"wrap",marginBottom:24}}>
+        <div><div style={{fontSize:12,color:"var(--muted)",marginBottom:8}}>ordmerke</div>
+          <Toggle value={brand.wordmark} onChange={v=>update({wordmark:v})} options={[{v:"geo",l:"geometrisk"},{v:"mono",l:"terminal"},{v:"pixel",l:"pixel (flat)"}]}/></div>
+        <div><div style={{fontSize:12,color:"var(--muted)",marginBottom:8}}>merke</div>
+          <Toggle value={brand.mark} onChange={v=>update({mark:v})} options={[{v:"pulse",l:"puls ★"},{v:"ring",l:"presence-ring"},{v:"monogram",l:"h (sekundær)"}]}/></div>
+      </div>
+      <div style={{border:"1px solid var(--line)",borderRadius:16,background:"var(--panel)",padding:"48px 24px",display:"flex",flexWrap:"wrap",gap:48,alignItems:"center",justifyContent:"center"}}>
+        <Wordmark style={brand.wordmark}/>
+        <Mark concept={brand.mark} size={104}/>
+      </div>
+      <p style={{fontSize:13,color:"var(--muted)",marginTop:14,maxWidth:620}}>To nivåer: <b>pulsen alene</b> (favicon, in-game, emblem) og <b>pulsen med ansikt</b> (maskoten / presence). Samme glyf, to bruksområder.</p>
+    </Page>
+  );
+}
+
+/* ============ TOOL: maskot ============ */
+function MascotTool({brand,setMascot}){
+  const c=brand.colors, cfg=brand.mascot;
+  const [copied,setCopied]=useState(false);
+  const set=k=>v=>setMascot({[k]:v});
+  function shuffle(){ const pick=a=>a[Math.floor(Math.random()*a.length)].v; setMascot({head:pick(HEAD_OPTS),eyes:pick(EYE_OPTS),top:pick(TOP_OPTS),body:pick(BODY_OPTS),mouth:"haum"}); }
+  return (
+    <Page title="maskot" sub="Munnen er konstant — den er pulsen. Alt rundt den utforsker vi her.">
+      <div style={{display:"flex",gap:32,flexWrap:"wrap",alignItems:"flex-start"}}>
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14}}>
+          <div style={{border:"1px solid var(--line)",borderRadius:20,background:"var(--panel)",padding:"22px 34px"}}><Svg html={buildMascot(cfg,c,210)} size={210}/></div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={shuffle} className="focusable lift" style={{border:"1px solid var(--line)",borderRadius:8,padding:"8px 15px",fontSize:13}}>tilfeldig</button>
+            <button onClick={()=>setMascot(MASCOT_PRESETS[0].cfg)} className="focusable lift" style={{border:"1px solid var(--line)",borderRadius:8,padding:"8px 15px",fontSize:13}}>nullstill</button>
+            <button onClick={()=>copyText(buildMascot(cfg,c,160),()=>{setCopied(true);setTimeout(()=>setCopied(false),1200);})} className="focusable lift" style={{border:"1px solid var(--signal)",color:"var(--signal)",borderRadius:8,padding:"8px 15px",fontSize:13}}>{copied?"kopiert ✓":"kopier SVG"}</button>
+          </div>
+        </div>
+        <div style={{flex:"1 1 360px",minWidth:300}}>
+          <Group label="hode" value={cfg.head} set={set("head")} options={HEAD_OPTS}/>
+          <Group label="øyne" value={cfg.eyes} set={set("eyes")} options={EYE_OPTS}/>
+          <Group label="topp" value={cfg.top} set={set("top")} options={TOP_OPTS}/>
+          <Group label="kropp" value={cfg.body} set={set("body")} options={BODY_OPTS}/>
+          <Group label="munn" value={cfg.mouth} set={set("mouth")} options={MOUTH_OPTS}/>
+        </div>
+      </div>
+
+      <hr style={{margin:"28px 0"}}/>
+      <div className="eyebrow" style={{marginBottom:14}}>startpunkter — hver med en mening</div>
+      <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+        {MASCOT_PRESETS.map(p=>{
+          const sel=JSON.stringify(p.cfg)===JSON.stringify(cfg);
+          return (
+            <button key={p.name} onClick={()=>setMascot(p.cfg)} className="lift focusable" style={{border:"1px solid",borderColor:sel?"var(--signal)":"var(--line)",background:"var(--panel)",borderRadius:14,padding:12,width:116,textAlign:"center"}}>
+              <Svg html={buildMascot(p.cfg,c,70)} size={70}/>
+              <div style={{fontSize:13,fontWeight:600,marginTop:6}}>{p.name}</div>
+              <div style={{fontSize:11,color:"var(--muted)"}}>{p.note}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      <hr style={{margin:"28px 0"}}/>
+      <div className="eyebrow" style={{marginBottom:6}}>leses den som liten?</div>
+      <p style={{fontSize:13,color:"var(--muted)",marginBottom:18,maxWidth:520}}>Skal funke som online-prikk og favicon. Hvis pulsen forsvinner her, er den for travel.</p>
+      <div style={{display:"flex",gap:24,alignItems:"flex-end",flexWrap:"wrap"}}>
+        {[64,48,36,28].map(sz=>(<div key={sz} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><Svg html={buildMascot(cfg,c,sz)} size={sz}/><span className="mono" style={{fontSize:11,color:"var(--muted)"}}>{sz}px</span></div>))}
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+          <div style={{width:56,height:56,borderRadius:"50%",overflow:"hidden",background:"var(--panel)",border:"1px solid var(--line)",display:"flex",alignItems:"center",justifyContent:"center"}}><Svg html={buildMascot(cfg,c,52)} size={52}/></div>
+          <span className="mono" style={{fontSize:11,color:"var(--muted)"}}>avatar</span>
+        </div>
+      </div>
+    </Page>
+  );
+}
+
+/* ============ TOOL REGISTRY — legg til nye verktøy her ============
+   Et verktøy er bare en komponent som tar (brand + actions) som props.
+   Legg til {id,label,render} under, og det dukker opp i menyen + ruting automatisk. */
+const TOOLS=[
+  {id:"oversikt", label:"Oversikt", render:(b,a)=><Home brand={b} go={a.go}/>},
+  {id:"palett",   label:"Palett",   render:(b,a)=><PaletteTool brand={b} setPal={a.setPal} setColor={a.setColor}/>},
+  {id:"logo",     label:"Logo",     render:(b,a)=><LogoTool brand={b} update={a.update}/>},
+  {id:"maskot",   label:"Maskot",   render:(b,a)=><MascotTool brand={b} setMascot={a.setMascot}/>},
+];
+
+/* ============ shell ============ */
+function useHash(){
+  const get=()=>window.location.hash.replace("#/","")||TOOLS[0].id;
+  const [h,setH]=useState(get);
+  useEffect(()=>{ const f=()=>setH(get()); window.addEventListener("hashchange",f); return ()=>window.removeEventListener("hashchange",f); },[]);
+  return [h,(id)=>{window.location.hash="#/"+id;}];
+}
+const DEFAULT_BRAND={palId:"aske",colors:{...palById("aske").c},wordmark:"geo",mark:"pulse",mascot:MASCOT_PRESETS[0].cfg};
+
+function App(){
+  const [hash,go]=useHash();
+  const [brand,setBrand]=useState(()=>{
+    try{ const s=JSON.parse(localStorage.getItem("haum-brand")); return s?{...DEFAULT_BRAND,...s}:DEFAULT_BRAND; }catch(e){ return DEFAULT_BRAND; }
+  });
+  useEffect(()=>{ try{ localStorage.setItem("haum-brand",JSON.stringify(brand)); }catch(e){} },[brand]);
+
+  const actions={
+    go,
+    update:(patch)=>setBrand(b=>({...b,...patch})),
+    setPal:(id)=>setBrand(b=>({...b,palId:id,colors:{...palById(id).c}})),
+    setColor:(role,val)=>setBrand(b=>({...b,colors:{...b.colors,[role]:val}})),
+    setMascot:(patch)=>setBrand(b=>({...b,mascot:{...b.mascot,...patch}})),
+  };
+  const root=useMemo(()=>{ const s={}; ["bg","panel","line","text","muted","signal","accent"].forEach(k=>s["--"+k]=brand.colors[k]); return s; },[brand.colors]);
+  const active=TOOLS.find(t=>t.id===hash)||TOOLS[0];
+
+  return (
+    <div style={{...root,background:"var(--bg)",color:"var(--text)",transition:"background .25s ease"}}>
+      <div className="app">
+        <nav className="rail">
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <Pulse size={42} stroke={6} baseline={false}/>
+            <span style={{fontSize:17,fontWeight:800,letterSpacing:"-.03em"}}>haum</span>
+          </div>
+          <div className="navlist">
+            {TOOLS.map(t=>(
+              <button key={t.id} className={"nav focusable"+(active.id===t.id?" on":"")} onClick={()=>go(t.id)}>
+                <span style={{width:6,height:6,borderRadius:"50%",background:active.id===t.id?"var(--signal)":"var(--line)"}}/>{t.label}
+              </button>
+            ))}
+          </div>
+        </nav>
+        <main className="main">
+          {active.render(brand,actions)}
+        </main>
+      </div>
+    </div>
+  );
+}
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
